@@ -14,16 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      games: {
+        Row: {
+          closed: boolean
+          created_at: string
+          id: string
+          match_at: string
+          score_away: number | null
+          score_home: number | null
+          scorer: string | null
+          team_away: string
+          team_home: string
+        }
+        Insert: {
+          closed?: boolean
+          created_at?: string
+          id?: string
+          match_at: string
+          score_away?: number | null
+          score_home?: number | null
+          scorer?: string | null
+          team_away: string
+          team_home: string
+        }
+        Update: {
+          closed?: boolean
+          created_at?: string
+          id?: string
+          match_at?: string
+          score_away?: number | null
+          score_home?: number | null
+          scorer?: string | null
+          team_away?: string
+          team_home?: string
+        }
+        Relationships: []
+      }
+      predictions: {
+        Row: {
+          created_at: string
+          game_id: string
+          guess_away: number
+          guess_home: number
+          guess_scorer: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          guess_away: number
+          guess_home: number
+          guess_scorer?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          guess_away?: number
+          guess_home?: number
+          guess_scorer?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      rankings: {
+        Row: {
+          display_name: string | null
+          points: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +272,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

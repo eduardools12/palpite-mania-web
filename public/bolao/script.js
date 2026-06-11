@@ -285,14 +285,14 @@ async function encerrarJogo(gameId) {
 let canal = null;
 function iniciarRealtime() {
   if (canal) return;
+  // Só escutamos mudanças em "games" (jogo novo ou placar lançado).
+  // Palpites NÃO são publicados em tempo real para não vazar palpites
+  // de outros jogadores enquanto o jogo está aberto.
   canal = sb.channel("bolao-changes")
     .on("postgres_changes", { event: "*", schema: "public", table: "games" }, () => {
       carregarJogos();
       carregarRanking();
       if (state.isAdmin) carregarJogosParaEncerrar();
-    })
-    .on("postgres_changes", { event: "*", schema: "public", table: "predictions" }, () => {
-      carregarRanking();
     })
     .subscribe();
 }

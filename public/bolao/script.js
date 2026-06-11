@@ -158,30 +158,85 @@ function renderCardJogo(j, palpite) {
   const data = new Date(j.match_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
   if (j.closed) {
+    const scorers = j.scorers || [];
+    const minutes = j.minutes || [];
+    const gols = scorers.map((s, i) => {
+      const m = minutes[i];
+      const nome = (s && s.trim()) ? s : "(sem jogador)";
+      const min  = (m !== null && m !== undefined && m !== "") ? `${m}'` : "";
+      return `${nome}${min ? " " + min : ""}`;
+    }).join(" • ");
+
+    const pScorers = (palpite?.guess_scorers) || [];
+    const pMinutes = (palpite?.guess_minutes) || [];
+    const meusGols = pScorers.map((s, i) => {
+      const m = pMinutes[i];
+      const nome = (s && s.trim()) ? s : "?";
+      const min  = (m !== null && m !== undefined && m !== "") ? ` ${m}'` : "";
+      return `${nome}${min}`;
+    }).join(" • ");
+
     div.innerHTML = `
       <h3>${j.team_home} <b>${j.score_home}</b> x <b>${j.score_away}</b> ${j.team_away}</h3>
       <div class="data">${data} • Encerrado</div>
-      ${j.scorer ? `<div class="status-final">Goleador: ${j.scorer}</div>` : ""}
+      ${gols ? `<div class="status-final">Gols: ${gols}</div>` : ""}
       ${palpite ? `<div class="status-final" style="color:#60a5fa">
         Seu palpite: ${palpite.guess_home} x ${palpite.guess_away}
-        ${palpite.guess_scorer ? ` • ${palpite.guess_scorer}` : ""}
+        ${meusGols ? ` • ${meusGols}` : ""}
       </div>` : ""}
     `;
     return div;
   }
 
+  // Jogo ainda aberto. Verifica se está dentro do prazo (até 1 min antes).
+  const inicioMs   = new Date(j.match_at).getTime();
+  const travadoEm  = inicioMs - 60_000;
+  const travado    = Date.now() >= travadoEm;
+
   div.innerHTML = `
     <h3>${j.team_home} x ${j.team_away}</h3>
-    <div class="data">${data}</div>
+    <div class="data">${data}${travado ? " • Palpites travados" : ""}</div>
     <div class="placar-input">
-      <input type="number" min="0" id="gh-${j.id}" value="${palpite?.guess_home ?? ""}" placeholder="0" />
+      <input type="number" min="0" id="gh-${j.id}" value="${palpite?.guess_home ?? ""}" placeholder="0" ${travado ? "disabled" : ""} />
       <span>x</span>
-      <input type="number" min="0" id="ga-${j.id}" value="${palpite?.guess_away ?? ""}" placeholder="0" />
+      <input type="number" min="0" id="ga-${j.id}" value="${palpite?.guess_away ?? ""}" placeholder="0" ${travado ? "disabled" : ""} />
     </div>
-    <input type="text" id="gs-${j.id}" value="${palpite?.guess_scorer ?? ""}" placeholder="Quem fez o gol? (opcional)" />
-    <button data-jogo="${j.id}">${palpite ? "Atualizar palpite" : "Enviar palpite"}</button>
+    <div class="slots-gols" id="slots-${j.id}"></div>
+    ${travado
+      ? `<p class="msg">Os palpites para este jogo já estão travados (1 min antes do início).</p>`
+      : `<button data-jogo="${j.id}">${palpite ? "Atualizar palpite" : "Enviar palpite"}</button>`}
   `;
-  div.querySelector("button").addEventListener("click", () => enviarPalpite(j.id));
+
+  const ghEl    = div.querySelector(`#gh-${j.id}`);
+  const gaEl    = div.querySelector(`#ga-${j.id}`);
+  const slotsEl = div.querySelector(`#slots-${j.id}`);
+
+  const renderSlots = () => {
+    const gh = parseInt(ghEl.value, 10);
+    const ga = parseInt(gaEl.value, 10);
+    const total = (Number.isNaN(gh) ? 0 : gh) + (Number.isNaN(ga) ? 0 : ga);
+    const prevScorers = palpite?.guess_scorers || [];
+    const prevMinutes = palpite?.guess_minutes || [];
+    if (total <= 0) { slotsEl.innerHTML = ""; return; }
+    let html = `<p class="dica">Para cada gol, opcionalmente diga quem fez (+1 pt) e em que minuto (+2 pts).</p>`;
+    for (let i = 0; i < total; i++) {
+      const s = prevScorers[i] ?? "";
+      const m = prevMinutes[i] ?? "";
+      html += `
+        <div class="linha-gol">
+          <span>Gol ${i + 1}</span>
+          <input type="text"   data-tipo="scorer" data-i="${i}" value="${s}" placeholder="Jogador (opcional)" ${travado ? "disabled" : ""} />
+          <input type="number" data-tipo="minute" data-i="${i}" min="0" max="200" value="${m}" placeholder="Min" ${travado ? "disabled" : ""} />
+        </div>`;
+    }
+    slotsEl.innerHTML = html;
+  };
+  renderSlots();
+  if (!travado) {
+    ghEl.addEventListener("input", renderSlots);
+    gaEl.addEventListener("input", renderSlots);
+    div.querySelector("button")?.addEventListener("click", () => enviarPalpite(j.id, slotsEl));
+  }
   return div;
 }
 

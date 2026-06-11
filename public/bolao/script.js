@@ -244,15 +244,26 @@ function renderCardJogo(j, palpite) {
 /* ------------------------------------------------------------
    5) PALPITES — upsert (cria ou atualiza) na tabela predictions
    ------------------------------------------------------------ */
-async function enviarPalpite(gameId) {
+async function enviarPalpite(gameId, slotsEl) {
   const gh = parseInt($("#gh-" + gameId).value, 10);
   const ga = parseInt($("#ga-" + gameId).value, 10);
-  const gs = $("#gs-" + gameId).value.trim() || null;
   if (Number.isNaN(gh) || Number.isNaN(ga)) return alert("Preencha os dois placares.");
+
+  const total = gh + ga;
+  const guess_scorers = [];
+  const guess_minutes = [];
+  for (let i = 0; i < total; i++) {
+    const sEl = slotsEl.querySelector(`input[data-tipo="scorer"][data-i="${i}"]`);
+    const mEl = slotsEl.querySelector(`input[data-tipo="minute"][data-i="${i}"]`);
+    guess_scorers.push((sEl?.value || "").trim());
+    const mv = mEl?.value;
+    guess_minutes.push(mv === "" || mv === undefined || mv === null ? null : parseInt(mv, 10));
+  }
 
   const { error } = await sb.from("predictions").upsert({
     game_id: gameId, user_id: state.user.id,
-    guess_home: gh, guess_away: ga, guess_scorer: gs,
+    guess_home: gh, guess_away: ga,
+    guess_scorers, guess_minutes,
   }, { onConflict: "game_id,user_id" });
 
   if (error) alert("Erro: " + error.message);

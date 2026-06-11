@@ -20,9 +20,11 @@ export type Database = {
           created_at: string
           id: string
           match_at: string
+          minutes: number[]
           score_away: number | null
           score_home: number | null
           scorer: string | null
+          scorers: string[]
           team_away: string
           team_home: string
         }
@@ -31,9 +33,11 @@ export type Database = {
           created_at?: string
           id?: string
           match_at: string
+          minutes?: number[]
           score_away?: number | null
           score_home?: number | null
           scorer?: string | null
+          scorers?: string[]
           team_away: string
           team_home: string
         }
@@ -42,9 +46,11 @@ export type Database = {
           created_at?: string
           id?: string
           match_at?: string
+          minutes?: number[]
           score_away?: number | null
           score_home?: number | null
           scorer?: string | null
+          scorers?: string[]
           team_away?: string
           team_home?: string
         }
@@ -56,7 +62,9 @@ export type Database = {
           game_id: string
           guess_away: number
           guess_home: number
+          guess_minutes: number[]
           guess_scorer: string | null
+          guess_scorers: string[]
           id: string
           user_id: string
         }
@@ -65,7 +73,9 @@ export type Database = {
           game_id: string
           guess_away: number
           guess_home: number
+          guess_minutes?: number[]
           guess_scorer?: string | null
+          guess_scorers?: string[]
           id?: string
           user_id: string
         }
@@ -74,7 +84,9 @@ export type Database = {
           game_id?: string
           guess_away?: number
           guess_home?: number
+          guess_minutes?: number[]
           guess_scorer?: string | null
+          guess_scorers?: string[]
           id?: string
           user_id?: string
         }

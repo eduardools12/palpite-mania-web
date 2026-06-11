@@ -106,7 +106,7 @@ async function carregarPerfilEPapel() {
 function abrirApp() {
   telaLogin.classList.add("hidden");
   app.classList.remove("hidden");
-  $("#user-nome").textContent = "👤 " + (state.profile?.display_name || state.user.email);
+  $("#user-nome").textContent = state.profile?.display_name || state.user.email;
   $("#btn-aba-mod").classList.toggle("hidden", !state.isAdmin);
 
   carregarJogos();

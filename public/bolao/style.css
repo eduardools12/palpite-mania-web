@@ -178,3 +178,22 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .abas { justify-content: center; }
   .linha-encerrar { grid-template-columns: 1fr 1fr; }
 }
+/* Slots de gols (palpite e moderação) */
+.slots-gols { display: grid; gap: 6px; margin: 8px 0; }
+.linha-gol {
+  display: grid;
+  grid-template-columns: 60px 1fr 80px;
+  gap: 6px;
+  align-items: center;
+}
+.linha-gol span { font-size: 13px; opacity: .8; }
+.linha-encerrar-topo {
+  display: grid;
+  grid-template-columns: 2fr 80px 80px 110px;
+  gap: 8px;
+  align-items: center;
+}
+@media (max-width: 640px) {
+  .linha-encerrar-topo { grid-template-columns: 1fr 1fr; }
+  .linha-gol { grid-template-columns: 50px 1fr 70px; }
+}

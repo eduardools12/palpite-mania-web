@@ -1,0 +1,106 @@
+<!--
+  ===========================================================
+  BOLÃO - Página principal (HTML)
+  -----------------------------------------------------------
+  ESTRUTURA do site. Sem estilo (CSS) e sem comportamento (JS).
+
+  Seções:
+    1. #tela-login    -> tela de cadastro/entrada (e-mail+senha)
+    2. #app           -> aplicativo após login
+       - header com abas e botão sair
+       - #tab-jogos     -> jogos abertos + palpites do jogador
+       - #tab-ranking   -> ranking compartilhado (tempo real)
+       - #tab-moderacao -> só visível para o admin
+  ===========================================================
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bolão da Galera</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ====================== TELA DE LOGIN ====================== -->
+  <section id="tela-login" class="tela-login">
+    <div class="card-login">
+      <h1>⚽ Bolão da Galera</h1>
+      <p class="sub">Entre ou crie sua conta para palpitar</p>
+
+      <form id="form-auth">
+        <input type="text"     id="auth-nome"  placeholder="Seu nome (só no cadastro)" />
+        <input type="email"    id="auth-email" placeholder="E-mail"  required />
+        <input type="password" id="auth-senha" placeholder="Senha"   required minlength="6" />
+        <div class="botoes-auth">
+          <button type="submit" id="btn-entrar">Entrar</button>
+          <button type="button" id="btn-cadastrar">Criar conta</button>
+        </div>
+        <p id="auth-msg" class="msg"></p>
+      </form>
+    </div>
+  </section>
+
+
+  <!-- ====================== APLICATIVO ====================== -->
+  <div id="app" class="hidden">
+
+    <header class="topo">
+      <h1>⚽ Bolão da Galera</h1>
+      <nav class="abas">
+        <button class="aba-btn ativa" data-aba="tab-jogos">Jogos &amp; Palpites</button>
+        <button class="aba-btn"        data-aba="tab-ranking">Ranking</button>
+        <button class="aba-btn hidden" data-aba="tab-moderacao" id="btn-aba-mod">Moderação</button>
+      </nav>
+      <div class="user-box">
+        <span id="user-nome"></span>
+        <button id="btn-sair">Sair</button>
+      </div>
+    </header>
+
+    <!-- ABA 1: JOGOS -->
+    <section id="tab-jogos" class="aba ativa">
+      <h2>Jogos abertos para palpite</h2>
+      <p class="dica">Placar exato = <b>3 pts</b> • vencedor = <b>1 pt</b> • goleador = <b>+1 pt</b></p>
+      <div id="lista-jogos" class="grid-jogos"></div>
+    </section>
+
+    <!-- ABA 2: RANKING -->
+    <section id="tab-ranking" class="aba">
+      <h2>🏆 Ranking (tempo real)</h2>
+      <table class="tabela-ranking">
+        <thead><tr><th>#</th><th>Jogador</th><th>Pontos</th></tr></thead>
+        <tbody id="corpo-ranking"></tbody>
+      </table>
+    </section>
+
+    <!-- ABA 3: MODERAÇÃO (só admin) -->
+    <section id="tab-moderacao" class="aba">
+      <h2>🛠️ Moderação</h2>
+
+      <div class="card">
+        <h3>Postar novo jogo</h3>
+        <form id="form-novo-jogo" class="form-linha">
+          <input type="text" id="time-casa" placeholder="Time da casa" required />
+          <span>x</span>
+          <input type="text" id="time-fora" placeholder="Time visitante" required />
+          <input type="datetime-local" id="data-jogo" required />
+          <button type="submit">Postar jogo</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Encerrar jogos (lançar placar)</h3>
+        <div id="lista-encerrar"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- SDK do banco (carregado via CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- TODA a lógica está aqui -->
+  <script src="script.js"></script>
+</body>
+</html>

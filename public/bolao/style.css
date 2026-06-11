@@ -1,0 +1,180 @@
+/* ===========================================================
+   BOLÃO - Estilos (CSS)
+   Apenas APARÊNCIA. Cores, espaçamentos, layout, responsivo.
+   =========================================================== */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+.hidden { display: none !important; }
+
+/* ---------- TELA DE LOGIN ---------- */
+.tela-login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.card-login {
+  background: #1e293b;
+  padding: 2rem;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.4);
+}
+.card-login h1 { font-size: 1.6rem; margin-bottom: .25rem; }
+.card-login .sub { color: #94a3b8; margin-bottom: 1.25rem; font-size: .9rem; }
+#form-auth input {
+  width: 100%;
+  padding: .7rem .8rem;
+  margin-bottom: .6rem;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+.botoes-auth { display: flex; gap: .5rem; margin-top: .25rem; }
+.botoes-auth button { flex: 1; }
+.msg { margin-top: .8rem; font-size: .85rem; min-height: 1.2em; }
+.msg.erro { color: #f87171; }
+.msg.ok   { color: #4ade80; }
+
+/* ---------- TOPO / ABAS ---------- */
+.topo {
+  background: #0b1220;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #1e293b;
+}
+.topo h1 { font-size: 1.2rem; }
+.abas { display: flex; gap: .4rem; flex: 1; }
+.aba-btn {
+  background: transparent;
+  color: #cbd5e1;
+  border: 1px solid #334155;
+  padding: .5rem .9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: .9rem;
+}
+.aba-btn.ativa { background: #2563eb; border-color: #2563eb; color: #fff; }
+.user-box { display: flex; align-items: center; gap: .6rem; font-size: .9rem; }
+
+/* ---------- BOTÕES GERAIS ---------- */
+button {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: .55rem .9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: .9rem;
+  transition: background .15s;
+}
+button:hover { background: #1d4ed8; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+#btn-sair, #btn-cadastrar { background: #475569; }
+#btn-sair:hover, #btn-cadastrar:hover { background: #334155; }
+
+/* ---------- ABAS ---------- */
+.aba { display: none; padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+.aba.ativa { display: block; }
+.aba h2 { margin-bottom: .5rem; }
+.dica { color: #94a3b8; margin-bottom: 1.2rem; font-size: .9rem; }
+
+/* ---------- CARDS DE JOGOS ---------- */
+.grid-jogos { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.card-jogo, .card {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #334155;
+}
+.card { margin-bottom: 1.2rem; }
+.card-jogo h3 { font-size: 1rem; margin-bottom: .3rem; }
+.card-jogo .data { color: #94a3b8; font-size: .8rem; margin-bottom: .8rem; }
+.placar-input { display: flex; align-items: center; gap: .4rem; margin-bottom: .6rem; }
+.placar-input input {
+  width: 50px;
+  text-align: center;
+  padding: .4rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+.placar-input span { color: #94a3b8; }
+.card-jogo input[type="text"] {
+  width: 100%;
+  padding: .45rem .6rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  margin-bottom: .6rem;
+  font-size: .9rem;
+}
+.card-jogo button { width: 100%; }
+.status-final {
+  background: #0f172a;
+  padding: .4rem .6rem;
+  border-radius: 6px;
+  font-size: .85rem;
+  color: #4ade80;
+  margin-top: .4rem;
+}
+
+/* ---------- RANKING ---------- */
+.tabela-ranking { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 10px; overflow: hidden; }
+.tabela-ranking th, .tabela-ranking td { padding: .7rem 1rem; text-align: left; border-bottom: 1px solid #334155; }
+.tabela-ranking th { background: #0b1220; font-size: .85rem; text-transform: uppercase; color: #94a3b8; }
+.tabela-ranking tr:last-child td { border-bottom: none; }
+.tabela-ranking td:last-child { font-weight: bold; color: #fbbf24; }
+
+/* ---------- MODERAÇÃO ---------- */
+.form-linha { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.form-linha input {
+  flex: 1;
+  min-width: 130px;
+  padding: .5rem .7rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+.linha-encerrar {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  gap: .5rem;
+  align-items: center;
+  padding: .6rem 0;
+  border-bottom: 1px solid #334155;
+}
+.linha-encerrar:last-child { border-bottom: none; }
+.linha-encerrar input {
+  padding: .4rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+.linha-encerrar input[type="number"] { width: 55px; text-align: center; }
+.linha-encerrar input[type="text"]   { width: 130px; }
+
+@media (max-width: 640px) {
+  .topo { flex-direction: column; align-items: stretch; }
+  .abas { justify-content: center; }
+  .linha-encerrar { grid-template-columns: 1fr 1fr; }
+}

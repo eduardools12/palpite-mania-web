@@ -317,25 +317,58 @@ async function carregarJogosParaEncerrar() {
     const linha = document.createElement("div");
     linha.className = "linha-encerrar";
     linha.innerHTML = `
-      <span><b>${j.team_home}</b> x <b>${j.team_away}</b></span>
-      <input type="number" min="0" placeholder="Casa"   id="sh-${j.id}" />
-      <input type="number" min="0" placeholder="Fora"   id="sa-${j.id}" />
-      <input type="text"           placeholder="Goleador" id="sc-${j.id}" />
-      <button data-jogo="${j.id}">Encerrar</button>
+      <div class="linha-encerrar-topo">
+        <span><b>${j.team_home}</b> x <b>${j.team_away}</b></span>
+        <input type="number" min="0" placeholder="Casa" id="sh-${j.id}" />
+        <input type="number" min="0" placeholder="Fora" id="sa-${j.id}" />
+        <button data-jogo="${j.id}">Encerrar</button>
+      </div>
+      <div class="slots-gols" id="slots-mod-${j.id}"></div>
     `;
-    linha.querySelector("button").addEventListener("click", () => encerrarJogo(j.id));
+    const shEl = linha.querySelector(`#sh-${j.id}`);
+    const saEl = linha.querySelector(`#sa-${j.id}`);
+    const slotsEl = linha.querySelector(`#slots-mod-${j.id}`);
+    const renderModSlots = () => {
+      const sh = parseInt(shEl.value, 10);
+      const sa = parseInt(saEl.value, 10);
+      const total = (Number.isNaN(sh) ? 0 : sh) + (Number.isNaN(sa) ? 0 : sa);
+      if (total <= 0) { slotsEl.innerHTML = ""; return; }
+      let html = "";
+      for (let i = 0; i < total; i++) {
+        html += `
+          <div class="linha-gol">
+            <span>Gol ${i + 1}</span>
+            <input type="text"   data-tipo="scorer" data-i="${i}" placeholder="Jogador (opcional)" />
+            <input type="number" data-tipo="minute" data-i="${i}" min="0" max="200" placeholder="Min" />
+          </div>`;
+      }
+      slotsEl.innerHTML = html;
+    };
+    shEl.addEventListener("input", renderModSlots);
+    saEl.addEventListener("input", renderModSlots);
+    linha.querySelector("button").addEventListener("click", () => encerrarJogo(j.id, slotsEl));
     div.appendChild(linha);
   });
 }
 
-async function encerrarJogo(gameId) {
+async function encerrarJogo(gameId, slotsEl) {
   const sh = parseInt($("#sh-" + gameId).value, 10);
   const sa = parseInt($("#sa-" + gameId).value, 10);
-  const sc = $("#sc-" + gameId).value.trim() || null;
   if (Number.isNaN(sh) || Number.isNaN(sa)) return alert("Preencha o placar.");
 
+  const total = sh + sa;
+  const scorers = [];
+  const minutes = [];
+  for (let i = 0; i < total; i++) {
+    const sEl = slotsEl.querySelector(`input[data-tipo="scorer"][data-i="${i}"]`);
+    const mEl = slotsEl.querySelector(`input[data-tipo="minute"][data-i="${i}"]`);
+    scorers.push((sEl?.value || "").trim());
+    const mv = mEl?.value;
+    minutes.push(mv === "" || mv === undefined || mv === null ? null : parseInt(mv, 10));
+  }
+
   const { error } = await sb.from("games").update({
-    score_home: sh, score_away: sa, scorer: sc, closed: true,
+    score_home: sh, score_away: sa, scorers, minutes, closed: true,
   }).eq("id", gameId);
   if (error) return alert("Erro: " + error.message);
 

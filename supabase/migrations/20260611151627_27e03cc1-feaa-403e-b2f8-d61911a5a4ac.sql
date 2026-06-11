@@ -1,0 +1,1 @@
+ALTER VIEW public.rankings SET (security_invoker = true);

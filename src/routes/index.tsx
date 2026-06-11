@@ -3,27 +3,23 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "Bolão da Galera" },
+      { name: "description", content: "Bolão entre amigos: poste jogos, envie palpites e veja o ranking em tempo real." },
+      { property: "og:title", content: "Bolão da Galera" },
+      { property: "og:description", content: "Bolão entre amigos: poste jogos, envie palpites e veja o ranking em tempo real." },
     ],
   }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  // O site do bolão é puro HTML/CSS/JS em /public/bolao/.
+  // Usamos um iframe ocupando a tela inteira para servi-lo como home.
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <iframe
+      src="/bolao/index.html"
+      title="Bolão da Galera"
+      style={{ border: "none", width: "100vw", height: "100vh", display: "block" }}
+    />
   );
 }

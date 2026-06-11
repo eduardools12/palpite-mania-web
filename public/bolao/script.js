@@ -1,350 +1,298 @@
-/* =====================================================================
+/* ===========================================================
    BOLÃO - Lógica (JavaScript)
-   ---------------------------------------------------------------------
-   Aqui mora todo o COMPORTAMENTO do site:
-     • troca de abas
-     • cadastro/identificação do jogador
-     • postagem de jogos pela moderação
-     • registro dos palpites dos jogadores
-     • lançamento do placar final + cálculo dos pontos
-     • ranking atualizado em tempo real
+   ===========================================================
+   Este arquivo contém TODO o COMPORTAMENTO do site.
+   Está organizado em blocos comentados:
 
-   PERSISTÊNCIA:
-     Usamos `localStorage` (armazenamento do navegador). Tudo é salvo
-     em 3 "tabelas":
-       - bolao.jogos    -> lista de jogos criados pela moderação
-       - bolao.palpites -> lista de palpites (1 por jogador por jogo)
-       - bolao.jogador  -> nome do jogador atual neste navegador
-
-   REGRAS DE PONTUAÇÃO:
-       +3 pts  -> acertou o placar exato
-       +1 pt   -> acertou apenas o vencedor (ou empate)
-       +1 pt   -> acertou o nome do jogador que fez o gol
-   ===================================================================== */
+     1) CONFIGURAÇÃO    -> conecta ao backend (Lovable Cloud)
+     2) AUTENTICAÇÃO    -> cadastro, login, logout, sessão
+     3) NAVEGAÇÃO       -> trocar entre abas
+     4) JOGOS           -> carregar e exibir os jogos abertos
+     5) PALPITES        -> enviar/atualizar palpite do jogador
+     6) RANKING         -> ler a view de ranking e renderizar
+     7) MODERAÇÃO       -> criar jogo e lançar placar final
+     8) REALTIME        -> reatualiza tudo quando algo muda no
+                           banco (qualquer jogador, qualquer hora)
+   =========================================================== */
 
 
-/* ======================= 1. UTILITÁRIOS DE STORAGE ======================= */
+/* ------------------------------------------------------------
+   1) CONFIGURAÇÃO — cliente do banco
+   ------------------------------------------------------------ */
+const SUPABASE_URL  = "https://xoxpgvgpvqdhoztkxlyj.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhveHBndmdwdnFkaG96dGt4bHlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODI1NTgsImV4cCI6MjA5Njc1ODU1OH0.WG4wuoyax_ZDdTouAbvwLs6-IRtZjDBrwG7hnis-nc8";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// Lê uma "tabela" do localStorage (ou devolve [] se não existir).
-function ler(chave) {
-  try { return JSON.parse(localStorage.getItem(chave)) || []; }
-  catch { return []; }
+// Estado global simples
+const state = {
+  user: null,        // { id, email }
+  profile: null,     // { id, display_name }
+  isAdmin: false,
+};
+
+
+/* ------------------------------------------------------------
+   2) AUTENTICAÇÃO — cadastro, login, logout
+   ------------------------------------------------------------ */
+const $ = (sel) => document.querySelector(sel);
+const telaLogin = $("#tela-login");
+const app       = $("#app");
+const authMsg   = $("#auth-msg");
+
+function mostrarMsg(txt, tipo = "erro") {
+  authMsg.textContent = txt;
+  authMsg.className   = "msg " + tipo;
 }
 
-// Salva uma "tabela" no localStorage e dispara evento para atualizar a UI.
-function salvar(chave, valor) {
-  localStorage.setItem(chave, JSON.stringify(valor));
-  // Eventos próprios para re-renderizar quando os dados mudarem
-  window.dispatchEvent(new Event("bolao:mudou"));
+// CADASTRO (cria conta + perfil; trigger no banco cria role)
+$("#btn-cadastrar").addEventListener("click", async () => {
+  const nome  = $("#auth-nome").value.trim();
+  const email = $("#auth-email").value.trim();
+  const senha = $("#auth-senha").value;
+  if (!nome)  return mostrarMsg("Digite seu nome para se cadastrar.");
+  if (!email || senha.length < 6) return mostrarMsg("E-mail válido e senha de 6+ caracteres.");
+
+  mostrarMsg("Criando conta...", "ok");
+  const { data, error } = await sb.auth.signUp({
+    email, password: senha,
+    options: {
+      data: { display_name: nome },
+      emailRedirectTo: window.location.origin + window.location.pathname,
+    },
+  });
+  if (error) return mostrarMsg(error.message);
+  if (!data.session) return mostrarMsg("Conta criada! Confirme seu e-mail e entre.", "ok");
+  mostrarMsg("Conta criada!", "ok");
+});
+
+// LOGIN (form submit = botão Entrar)
+$("#form-auth").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = $("#auth-email").value.trim();
+  const senha = $("#auth-senha").value;
+  mostrarMsg("Entrando...", "ok");
+  const { error } = await sb.auth.signInWithPassword({ email, password: senha });
+  if (error) mostrarMsg(error.message);
+});
+
+// LOGOUT
+$("#btn-sair").addEventListener("click", async () => {
+  await sb.auth.signOut();
+});
+
+// Reage a mudanças de sessão (login/logout/refresh)
+sb.auth.onAuthStateChange(async (_event, session) => {
+  if (session?.user) {
+    state.user = session.user;
+    await carregarPerfilEPapel();
+    abrirApp();
+  } else {
+    state.user = null; state.profile = null; state.isAdmin = false;
+    telaLogin.classList.remove("hidden");
+    app.classList.add("hidden");
+  }
+});
+
+async function carregarPerfilEPapel() {
+  const { data: perfil } = await sb.from("profiles")
+    .select("id, display_name").eq("id", state.user.id).maybeSingle();
+  state.profile = perfil;
+
+  const { data: roles } = await sb.from("user_roles")
+    .select("role").eq("user_id", state.user.id);
+  state.isAdmin = (roles || []).some(r => r.role === "admin");
 }
 
-// Gera um ID simples e único.
-const novoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function abrirApp() {
+  telaLogin.classList.add("hidden");
+  app.classList.remove("hidden");
+  $("#user-nome").textContent = "👤 " + (state.profile?.display_name || state.user.email);
+  $("#btn-aba-mod").classList.toggle("hidden", !state.isAdmin);
+
+  carregarJogos();
+  carregarRanking();
+  if (state.isAdmin) carregarJogosParaEncerrar();
+  iniciarRealtime();
+}
 
 
-/* ======================= 2. SISTEMA DE ABAS ============================== */
-
-document.querySelectorAll(".aba-btn").forEach((btn) => {
+/* ------------------------------------------------------------
+   3) NAVEGAÇÃO ENTRE ABAS
+   ------------------------------------------------------------ */
+document.querySelectorAll(".aba-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    // tira a classe "ativa" de todos os botões e seções
-    document.querySelectorAll(".aba-btn").forEach((b) => b.classList.remove("ativa"));
-    document.querySelectorAll(".aba").forEach((s) => s.classList.remove("ativa"));
-    // marca o botão clicado e mostra a seção correspondente
+    document.querySelectorAll(".aba-btn").forEach(b => b.classList.remove("ativa"));
+    document.querySelectorAll(".aba").forEach(s => s.classList.remove("ativa"));
     btn.classList.add("ativa");
     document.getElementById(btn.dataset.aba).classList.add("ativa");
   });
 });
 
 
-/* ======================= 3. IDENTIFICAÇÃO DO JOGADOR ===================== */
+/* ------------------------------------------------------------
+   4) JOGOS — carrega jogos abertos e renderiza cards
+   ------------------------------------------------------------ */
+async function carregarJogos() {
+  const lista = $("#lista-jogos");
+  lista.innerHTML = "Carregando...";
 
-const inputNome   = document.getElementById("nome-jogador");
-const btnSalvar   = document.getElementById("btn-salvar-nome");
-const labelAtual  = document.getElementById("jogador-atual");
+  const { data: jogos, error } = await sb.from("games")
+    .select("*").order("match_at", { ascending: true });
+  if (error) { lista.innerHTML = "Erro: " + error.message; return; }
 
-function jogadorAtual() {
-  return localStorage.getItem("bolao.jogador") || "";
-}
+  // Palpites do usuário (para pré-preencher)
+  const { data: meusPalpites } = await sb.from("predictions")
+    .select("*").eq("user_id", state.user.id);
+  const mapPalpites = {};
+  (meusPalpites || []).forEach(p => mapPalpites[p.game_id] = p);
 
-function atualizarJogador() {
-  const nome = jogadorAtual();
-  labelAtual.textContent = nome ? `(${nome})` : "";
-  inputNome.value = nome;
-}
+  if (!jogos.length) { lista.innerHTML = "<p>Nenhum jogo postado ainda.</p>"; return; }
 
-btnSalvar.addEventListener("click", () => {
-  const nome = inputNome.value.trim();
-  if (!nome) return alert("Digite seu nome para palpitar.");
-  localStorage.setItem("bolao.jogador", nome);
-  atualizarJogador();
-  renderTudo();
-});
-
-
-/* ======================= 4. MODERAÇÃO: POSTAR JOGO ======================= */
-
-document.getElementById("form-novo-jogo").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const casa  = document.getElementById("time-casa").value.trim();
-  const fora  = document.getElementById("time-fora").value.trim();
-  const data  = document.getElementById("data-jogo").value;
-  if (!casa || !fora || !data) return;
-
-  const jogos = ler("bolao.jogos");
-  jogos.push({
-    id: novoId(),
-    casa, fora, data,
-    encerrado: false,
-    placarCasa: null,
-    placarFora: null,
-    goleador:   null,
-  });
-  salvar("bolao.jogos", jogos);
-  e.target.reset();
-});
-
-
-/* ======================= 5. JOGADOR: ENVIAR PALPITE ====================== */
-
-// Procura o palpite que o jogador atual já fez nesse jogo (se houver).
-function meuPalpite(idJogo) {
-  const nome = jogadorAtual();
-  return ler("bolao.palpites").find(
-    (p) => p.idJogo === idJogo && p.jogador === nome
-  );
-}
-
-function enviarPalpite(idJogo, placarCasa, placarFora, goleador) {
-  const nome = jogadorAtual();
-  if (!nome) return alert("Digite seu nome no topo antes de palpitar.");
-  if (placarCasa === "" || placarFora === "") return alert("Preencha o placar.");
-
-  const palpites = ler("bolao.palpites");
-  // remove um palpite anterior do mesmo jogador para o mesmo jogo
-  const filtrados = palpites.filter(
-    (p) => !(p.idJogo === idJogo && p.jogador === nome)
-  );
-  filtrados.push({
-    id: novoId(),
-    idJogo,
-    jogador: nome,
-    placarCasa: Number(placarCasa),
-    placarFora: Number(placarFora),
-    goleador: (goleador || "").trim(),
-  });
-  salvar("bolao.palpites", filtrados);
-}
-
-
-/* ======================= 6. ENCERRAR JOGO + PONTUAÇÃO ==================== */
-
-function encerrarJogo(idJogo, placarCasa, placarFora, goleador) {
-  if (placarCasa === "" || placarFora === "") return alert("Informe o placar final.");
-
-  const jogos = ler("bolao.jogos");
-  const jogo  = jogos.find((j) => j.id === idJogo);
-  if (!jogo) return;
-
-  jogo.encerrado  = true;
-  jogo.placarCasa = Number(placarCasa);
-  jogo.placarFora = Number(placarFora);
-  jogo.goleador   = (goleador || "").trim();
-
-  salvar("bolao.jogos", jogos);
-}
-
-/**
- * Calcula os pontos de UM palpite com base no resultado real do jogo.
- *   +3 pts  -> placar exato
- *   +1 pt   -> só o vencedor (ou empate)
- *   +1 pt   -> goleador correto (comparação case-insensitive)
- */
-function pontosDoPalpite(palpite, jogo) {
-  if (!jogo || !jogo.encerrado) return 0;
-  let pts = 0;
-
-  const placarCerto =
-    palpite.placarCasa === jogo.placarCasa &&
-    palpite.placarFora === jogo.placarFora;
-
-  if (placarCerto) {
-    pts += 3;
-  } else {
-    const vencedorReal    = Math.sign(jogo.placarCasa    - jogo.placarFora);    // -1, 0 ou 1
-    const vencedorPalpite = Math.sign(palpite.placarCasa - palpite.placarFora);
-    if (vencedorReal === vencedorPalpite) pts += 1;
-  }
-
-  if (
-    jogo.goleador &&
-    palpite.goleador &&
-    jogo.goleador.toLowerCase() === palpite.goleador.toLowerCase()
-  ) {
-    pts += 1;
-  }
-
-  return pts;
-}
-
-
-/* ======================= 7. RANKING EM TEMPO REAL ======================== */
-
-function calcularRanking() {
-  const jogos    = ler("bolao.jogos");
-  const palpites = ler("bolao.palpites");
-  const mapa     = {}; // { nome: pontos }
-
-  palpites.forEach((p) => {
-    const jogo = jogos.find((j) => j.id === p.idJogo);
-    mapa[p.jogador] = (mapa[p.jogador] || 0) + pontosDoPalpite(p, jogo);
-  });
-
-  // garante que todos os jogadores que já palpitaram apareçam (mesmo com 0)
-  return Object.entries(mapa)
-    .map(([jogador, pontos]) => ({ jogador, pontos }))
-    .sort((a, b) => b.pontos - a.pontos);
-}
-
-
-/* ======================= 8. RENDERIZAÇÃO (DESENHA A TELA) ================ */
-
-// 8a) Cards de jogos abertos para o jogador palpitar
-function renderJogos() {
-  const lista = document.getElementById("lista-jogos");
-  const jogos = ler("bolao.jogos");
   lista.innerHTML = "";
+  jogos.forEach(j => lista.appendChild(renderCardJogo(j, mapPalpites[j.id])));
+}
 
-  if (jogos.length === 0) {
-    lista.innerHTML = `<p class="vazio">Nenhum jogo postado ainda. Aguarde a moderação.</p>`;
-    return;
-  }
+function renderCardJogo(j, palpite) {
+  const div = document.createElement("div");
+  div.className = "card-jogo";
+  const data = new Date(j.match_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
-  jogos.forEach((j) => {
-    const meu = meuPalpite(j.id);
-    const dataFormatada = new Date(j.data).toLocaleString("pt-BR");
-
-    const card = document.createElement("div");
-    card.className = "card-jogo";
-    card.innerHTML = `
-      <div class="times"><span>${j.casa}</span><span>x</span><span>${j.fora}</span></div>
-      <div class="quando">📅 ${dataFormatada}</div>
-
-      ${j.encerrado
-        ? `<div class="encerrado">Encerrado: ${j.placarCasa} x ${j.placarFora}
-             ${j.goleador ? `• Goleador: <b>${j.goleador}</b>` : ""}</div>`
-        : `
-          <div class="linha-placar">
-            <input type="number" min="0" class="palpite-casa" placeholder="0"
-                   value="${meu ? meu.placarCasa : ""}" />
-            <span>x</span>
-            <input type="number" min="0" class="palpite-fora" placeholder="0"
-                   value="${meu ? meu.placarFora : ""}" />
-          </div>
-          <input type="text" class="palpite-gol" placeholder="Quem fez o gol? (opcional)"
-                 value="${meu ? meu.goleador : ""}" style="width:100%; margin-bottom:8px;" />
-          <button class="btn-palpitar">${meu ? "Atualizar palpite" : "Enviar palpite"}</button>
-          ${meu ? `<div class="ja-palpitou">✓ você já palpitou neste jogo</div>` : ""}
-        `}
+  if (j.closed) {
+    div.innerHTML = `
+      <h3>${j.team_home} <b>${j.score_home}</b> x <b>${j.score_away}</b> ${j.team_away}</h3>
+      <div class="data">${data} • Encerrado</div>
+      ${j.scorer ? `<div class="status-final">Goleador: ${j.scorer}</div>` : ""}
+      ${palpite ? `<div class="status-final" style="color:#60a5fa">
+        Seu palpite: ${palpite.guess_home} x ${palpite.guess_away}
+        ${palpite.guess_scorer ? ` • ${palpite.guess_scorer}` : ""}
+      </div>` : ""}
     `;
-
-    // liga o botão de palpitar (só existe se o jogo está aberto)
-    const btn = card.querySelector(".btn-palpitar");
-    if (btn) {
-      btn.addEventListener("click", () => {
-        enviarPalpite(
-          j.id,
-          card.querySelector(".palpite-casa").value,
-          card.querySelector(".palpite-fora").value,
-          card.querySelector(".palpite-gol").value,
-        );
-      });
-    }
-    lista.appendChild(card);
-  });
-}
-
-// 8b) Tabela do ranking
-function renderRanking() {
-  const corpo = document.getElementById("corpo-ranking");
-  const rank  = calcularRanking();
-  corpo.innerHTML = "";
-
-  if (rank.length === 0) {
-    corpo.innerHTML = `<tr><td colspan="3" class="vazio">Sem jogadores ainda.</td></tr>`;
-    return;
-  }
-  rank.forEach((linha, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${i + 1}º</td><td>${linha.jogador}</td><td>${linha.pontos}</td>`;
-    corpo.appendChild(tr);
-  });
-}
-
-// 8c) Lista de jogos para a moderação encerrar (lançar placar)
-function renderModeracao() {
-  const div   = document.getElementById("lista-encerrar");
-  const jogos = ler("bolao.jogos");
-  div.innerHTML = "";
-
-  const abertos = jogos.filter((j) => !j.encerrado);
-  if (abertos.length === 0) {
-    div.innerHTML = `<p class="vazio">Nenhum jogo aberto para encerrar.</p>`;
-    return;
+    return div;
   }
 
-  abertos.forEach((j) => {
-    const box = document.createElement("div");
-    box.className = "jogo-mod";
-    box.innerHTML = `
-      <div class="titulo">${j.casa} x ${j.fora}</div>
-      <div class="controles">
-        <input type="number" min="0" class="fc" placeholder="Casa" />
-        <span>x</span>
-        <input type="number" min="0" class="ff" placeholder="Fora" />
-        <input type="text" class="gol" placeholder="Goleador (opcional)" />
-        <button class="btn-encerrar">Lançar placar e encerrar</button>
-      </div>
-    `;
-    box.querySelector(".btn-encerrar").addEventListener("click", () => {
-      encerrarJogo(
-        j.id,
-        box.querySelector(".fc").value,
-        box.querySelector(".ff").value,
-        box.querySelector(".gol").value,
-      );
-    });
-    div.appendChild(box);
-  });
-}
-
-// Re-renderiza TUDO. Barato porque o volume de dados é pequeno.
-function renderTudo() {
-  renderJogos();
-  renderRanking();
-  renderModeracao();
+  div.innerHTML = `
+    <h3>${j.team_home} x ${j.team_away}</h3>
+    <div class="data">${data}</div>
+    <div class="placar-input">
+      <input type="number" min="0" id="gh-${j.id}" value="${palpite?.guess_home ?? ""}" placeholder="0" />
+      <span>x</span>
+      <input type="number" min="0" id="ga-${j.id}" value="${palpite?.guess_away ?? ""}" placeholder="0" />
+    </div>
+    <input type="text" id="gs-${j.id}" value="${palpite?.guess_scorer ?? ""}" placeholder="Quem fez o gol? (opcional)" />
+    <button data-jogo="${j.id}">${palpite ? "Atualizar palpite" : "Enviar palpite"}</button>
+  `;
+  div.querySelector("button").addEventListener("click", () => enviarPalpite(j.id));
+  return div;
 }
 
 
-/* ======================= 9. ATUALIZAÇÃO EM TEMPO REAL ==================== */
+/* ------------------------------------------------------------
+   5) PALPITES — upsert (cria ou atualiza) na tabela predictions
+   ------------------------------------------------------------ */
+async function enviarPalpite(gameId) {
+  const gh = parseInt($("#gh-" + gameId).value, 10);
+  const ga = parseInt($("#ga-" + gameId).value, 10);
+  const gs = $("#gs-" + gameId).value.trim() || null;
+  if (Number.isNaN(gh) || Number.isNaN(ga)) return alert("Preencha os dois placares.");
 
-// Sempre que QUALQUER função salvar() rodar, redesenha a tela.
-window.addEventListener("bolao:mudou", renderTudo);
+  const { error } = await sb.from("predictions").upsert({
+    game_id: gameId, user_id: state.user.id,
+    guess_home: gh, guess_away: ga, guess_scorer: gs,
+  }, { onConflict: "game_id,user_id" });
 
-// Se outra aba do navegador alterar o storage, atualiza aqui também.
-window.addEventListener("storage", renderTudo);
+  if (error) alert("Erro: " + error.message);
+  else carregarJogos();
+}
 
 
-/* ======================= 10. BOTÃO DE RESET ============================== */
+/* ------------------------------------------------------------
+   6) RANKING — lê a view "rankings" (calculada no banco)
+   ------------------------------------------------------------ */
+async function carregarRanking() {
+  const corpo = $("#corpo-ranking");
+  const { data, error } = await sb.from("rankings")
+    .select("*").order("points", { ascending: false });
+  if (error) { corpo.innerHTML = `<tr><td colspan="3">Erro: ${error.message}</td></tr>`; return; }
+  if (!data.length) { corpo.innerHTML = `<tr><td colspan="3">Sem jogadores ainda.</td></tr>`; return; }
 
-document.getElementById("btn-resetar").addEventListener("click", () => {
-  if (!confirm("Tem certeza? Isso apaga jogos, palpites e ranking.")) return;
-  localStorage.removeItem("bolao.jogos");
-  localStorage.removeItem("bolao.palpites");
-  salvar("bolao.jogos", []); // dispara re-render
+  corpo.innerHTML = data.map((r, i) =>
+    `<tr><td>${i + 1}</td><td>${r.display_name}</td><td>${r.points}</td></tr>`
+  ).join("");
+}
+
+
+/* ------------------------------------------------------------
+   7) MODERAÇÃO — só admin
+   ------------------------------------------------------------ */
+// Criar novo jogo
+$("#form-novo-jogo").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const team_home = $("#time-casa").value.trim();
+  const team_away = $("#time-fora").value.trim();
+  const match_at  = new Date($("#data-jogo").value).toISOString();
+
+  const { error } = await sb.from("games").insert({ team_home, team_away, match_at });
+  if (error) return alert("Erro: " + error.message);
+
+  e.target.reset();
+  carregarJogos();
+  carregarJogosParaEncerrar();
 });
 
+// Lista jogos abertos com formulário p/ lançar placar
+async function carregarJogosParaEncerrar() {
+  const div = $("#lista-encerrar");
+  const { data: jogos } = await sb.from("games")
+    .select("*").eq("closed", false).order("match_at");
+  if (!jogos?.length) { div.innerHTML = "<p>Nenhum jogo aberto.</p>"; return; }
 
-/* ======================= 11. INICIALIZAÇÃO =============================== */
+  div.innerHTML = "";
+  jogos.forEach(j => {
+    const linha = document.createElement("div");
+    linha.className = "linha-encerrar";
+    linha.innerHTML = `
+      <span><b>${j.team_home}</b> x <b>${j.team_away}</b></span>
+      <input type="number" min="0" placeholder="Casa"   id="sh-${j.id}" />
+      <input type="number" min="0" placeholder="Fora"   id="sa-${j.id}" />
+      <input type="text"           placeholder="Goleador" id="sc-${j.id}" />
+      <button data-jogo="${j.id}">Encerrar</button>
+    `;
+    linha.querySelector("button").addEventListener("click", () => encerrarJogo(j.id));
+    div.appendChild(linha);
+  });
+}
 
-atualizarJogador();
-renderTudo();
+async function encerrarJogo(gameId) {
+  const sh = parseInt($("#sh-" + gameId).value, 10);
+  const sa = parseInt($("#sa-" + gameId).value, 10);
+  const sc = $("#sc-" + gameId).value.trim() || null;
+  if (Number.isNaN(sh) || Number.isNaN(sa)) return alert("Preencha o placar.");
+
+  const { error } = await sb.from("games").update({
+    score_home: sh, score_away: sa, scorer: sc, closed: true,
+  }).eq("id", gameId);
+  if (error) return alert("Erro: " + error.message);
+
+  carregarJogos();
+  carregarJogosParaEncerrar();
+  carregarRanking();
+}
+
+
+/* ------------------------------------------------------------
+   8) REALTIME — escuta mudanças no banco e reatualiza a tela
+   ------------------------------------------------------------ */
+let canal = null;
+function iniciarRealtime() {
+  if (canal) return;
+  canal = sb.channel("bolao-changes")
+    .on("postgres_changes", { event: "*", schema: "public", table: "games" }, () => {
+      carregarJogos();
+      carregarRanking();
+      if (state.isAdmin) carregarJogosParaEncerrar();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "predictions" }, () => {
+      carregarRanking();
+    })
+    .subscribe();
+}

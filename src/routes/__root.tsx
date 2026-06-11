@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Bolão dos Manja NBA" },
+      { name: "description", content: "Bolão dos Manja NBA is a sports betting website for NBA games." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Bolão dos Manja NBA" },
+      { property: "og:description", content: "Bolão dos Manja NBA is a sports betting website for NBA games." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Bolão dos Manja NBA" },
+      { name: "twitter:description", content: "Bolão dos Manja NBA is a sports betting website for NBA games." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3b3214c4-7c64-4eb4-8534-c2614da1dc97/id-preview-acd25b17--880b6f51-60a9-4f56-bd5a-a0c0082b279c.lovable.app-1781190171402.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3b3214c4-7c64-4eb4-8534-c2614da1dc97/id-preview-acd25b17--880b6f51-60a9-4f56-bd5a-a0c0082b279c.lovable.app-1781190171402.png" },
     ],
     links: [
       {

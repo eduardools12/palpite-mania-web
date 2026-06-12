@@ -47,6 +47,24 @@ body {
 .msg.erro { color: #f87171; }
 .msg.ok   { color: #4ade80; }
 
+#form-especiais label {
+  display: block;
+  margin-bottom: .8rem;
+  font-size: .9rem;
+  color: #cbd5e1;
+}
+#form-especiais input {
+  display: block;
+  width: 100%;
+  margin-top: .3rem;
+  padding: .6rem .7rem;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+
 /* ---------- TOPO / ABAS ---------- */
 .topo {
   background: #0b1220;

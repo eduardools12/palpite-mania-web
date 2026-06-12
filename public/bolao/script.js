@@ -84,11 +84,15 @@ $("#btn-sair").addEventListener("click", async () => {
 });
 
 // Reage a mudanças de sessão (login/logout/refresh)
-sb.auth.onAuthStateChange(async (_event, session) => {
+// IMPORTANTE: não usar await direto dentro do callback (causa deadlock no
+// supabase-js e o login fica preso em "Entrando..."). Defer com setTimeout.
+sb.auth.onAuthStateChange((_event, session) => {
   if (session?.user) {
     state.user = session.user;
-    await carregarPerfilEPapel();
-    abrirApp();
+    setTimeout(async () => {
+      await carregarPerfilEPapel();
+      abrirApp();
+    }, 0);
   } else {
     state.user = null; state.profile = null; state.isAdmin = false;
     telaLogin.classList.remove("hidden");
@@ -114,6 +118,7 @@ function abrirApp() {
 
   carregarJogos();
   carregarRanking();
+  carregarEspeciais();
   if (state.isAdmin) carregarJogosParaEncerrar();
   iniciarRealtime();
 }
@@ -300,6 +305,37 @@ async function carregarRanking() {
 /* ------------------------------------------------------------
    7) MODERAÇÃO — só admin
    ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   ESPECIAIS — palpites de temporada
+   ------------------------------------------------------------ */
+async function carregarEspeciais() {
+  const { data } = await sb.from("season_predictions")
+    .select("*").eq("user_id", state.user.id).maybeSingle();
+  if (!data) return;
+  $("#esp-artilheiro").value      = data.artilheiro      ?? "";
+  $("#esp-campeao").value         = data.campeao         ?? "";
+  $("#esp-time-revelacao").value  = data.time_revelacao  ?? "";
+  $("#esp-selecao-carisma").value = data.selecao_carisma ?? "";
+}
+
+$("#form-especiais").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msg = $("#esp-msg");
+  msg.className = "msg ok"; msg.textContent = "Salvando...";
+  const payload = {
+    user_id: state.user.id,
+    artilheiro:      $("#esp-artilheiro").value.trim()      || null,
+    campeao:         $("#esp-campeao").value.trim()         || null,
+    time_revelacao:  $("#esp-time-revelacao").value.trim()  || null,
+    selecao_carisma: $("#esp-selecao-carisma").value.trim() || null,
+  };
+  const { error } = await sb.from("season_predictions")
+    .upsert(payload, { onConflict: "user_id" });
+  if (error) { msg.className = "msg erro"; msg.textContent = "Erro: " + error.message; }
+  else       { msg.className = "msg ok";   msg.textContent = "Palpites salvos!"; }
+});
+
 // Criar novo jogo
 $("#form-novo-jogo").addEventListener("submit", async (e) => {
   e.preventDefault();

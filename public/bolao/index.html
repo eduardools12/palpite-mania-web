@@ -51,6 +51,7 @@
       <nav class="abas">
         <button class="aba-btn ativa" data-aba="tab-jogos">Jogos &amp; Palpites</button>
         <button class="aba-btn"        data-aba="tab-ranking">Ranking</button>
+        <button class="aba-btn"        data-aba="tab-especiais">Especiais</button>
         <button class="aba-btn hidden" data-aba="tab-moderacao" id="btn-aba-mod">Moderação</button>
       </nav>
       <div class="user-box">
@@ -77,6 +78,28 @@
         <thead><tr><th>#</th><th>Jogador</th><th>Pontos</th></tr></thead>
         <tbody id="corpo-ranking"></tbody>
       </table>
+    </section>
+
+    <!-- ABA ESPECIAIS: palpites de temporada -->
+    <section id="tab-especiais" class="aba">
+      <h2>Palpites Especiais da Temporada</h2>
+      <p class="dica">Faça seu palpite para as categorias de temporada. Você pode atualizar a qualquer momento.</p>
+      <form id="form-especiais" class="card">
+        <label>Artilheiro
+          <input type="text" id="esp-artilheiro" placeholder="Quem será o artilheiro?" />
+        </label>
+        <label>Campeão
+          <input type="text" id="esp-campeao" placeholder="Quem será o campeão?" />
+        </label>
+        <label>Time Revelação
+          <input type="text" id="esp-time-revelacao" placeholder="Time revelação da temporada" />
+        </label>
+        <label>Seleção Carisma
+          <input type="text" id="esp-selecao-carisma" placeholder="Time/seleção mais carismático" />
+        </label>
+        <button type="submit">Salvar palpites especiais</button>
+        <p id="esp-msg" class="msg"></p>
+      </form>
     </section>
 
     <!-- ABA 3: MODERAÇÃO (só admin) -->

@@ -35,6 +35,9 @@ const state = {
    2) AUTENTICAÇÃO — cadastro, login, logout
    ------------------------------------------------------------ */
 const $ = (sel) => document.querySelector(sel);
+const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+}[c]));
 const telaLogin = $("#tela-login");
 const app       = $("#app");
 const authMsg   = $("#auth-msg");
@@ -164,7 +167,7 @@ function renderCardJogo(j, palpite) {
       const m = minutes[i];
       const nome = (s && s.trim()) ? s : "(sem jogador)";
       const min  = (m !== null && m !== undefined && m !== "") ? `${m}'` : "";
-      return `${nome}${min ? " " + min : ""}`;
+      return `${escapeHtml(nome)}${min ? " " + escapeHtml(min) : ""}`;
     }).join(" • ");
 
     const pScorers = (palpite?.guess_scorers) || [];
@@ -173,15 +176,15 @@ function renderCardJogo(j, palpite) {
       const m = pMinutes[i];
       const nome = (s && s.trim()) ? s : "?";
       const min  = (m !== null && m !== undefined && m !== "") ? ` ${m}'` : "";
-      return `${nome}${min}`;
+      return `${escapeHtml(nome)}${escapeHtml(min)}`;
     }).join(" • ");
 
     div.innerHTML = `
-      <h3>${j.team_home} <b>${j.score_home}</b> x <b>${j.score_away}</b> ${j.team_away}</h3>
+      <h3>${escapeHtml(j.team_home)} <b>${escapeHtml(j.score_home)}</b> x <b>${escapeHtml(j.score_away)}</b> ${escapeHtml(j.team_away)}</h3>
       <div class="data">${data} • Encerrado</div>
       ${gols ? `<div class="status-final">Gols: ${gols}</div>` : ""}
       ${palpite ? `<div class="status-final" style="color:#60a5fa">
-        Seu palpite: ${palpite.guess_home} x ${palpite.guess_away}
+        Seu palpite: ${escapeHtml(palpite.guess_home)} x ${escapeHtml(palpite.guess_away)}
         ${meusGols ? ` • ${meusGols}` : ""}
       </div>` : ""}
     `;
@@ -194,7 +197,7 @@ function renderCardJogo(j, palpite) {
   const travado    = Date.now() >= travadoEm;
 
   div.innerHTML = `
-    <h3>${j.team_home} x ${j.team_away}</h3>
+    <h3>${escapeHtml(j.team_home)} x ${escapeHtml(j.team_away)}</h3>
     <div class="data">${data}${travado ? " • Palpites travados" : ""}</div>
     <div class="placar-input">
       <input type="number" min="0" id="gh-${j.id}" value="${palpite?.guess_home ?? ""}" placeholder="0" ${travado ? "disabled" : ""} />
@@ -325,7 +328,7 @@ async function carregarJogosParaEncerrar() {
     linha.className = "linha-encerrar";
     linha.innerHTML = `
       <div class="linha-encerrar-topo">
-        <span><b>${j.team_home}</b> x <b>${j.team_away}</b></span>
+        <span><b>${escapeHtml(j.team_home)}</b> x <b>${escapeHtml(j.team_away)}</b></span>
         <input type="number" min="0" placeholder="Casa" id="sh-${j.id}" />
         <input type="number" min="0" placeholder="Fora" id="sa-${j.id}" />
         <button data-jogo="${j.id}">Encerrar</button>

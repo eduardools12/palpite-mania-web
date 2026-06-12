@@ -84,11 +84,15 @@ $("#btn-sair").addEventListener("click", async () => {
 });
 
 // Reage a mudanças de sessão (login/logout/refresh)
-sb.auth.onAuthStateChange(async (_event, session) => {
+// IMPORTANTE: não usar await direto dentro do callback (causa deadlock no
+// supabase-js e o login fica preso em "Entrando..."). Defer com setTimeout.
+sb.auth.onAuthStateChange((_event, session) => {
   if (session?.user) {
     state.user = session.user;
-    await carregarPerfilEPapel();
-    abrirApp();
+    setTimeout(async () => {
+      await carregarPerfilEPapel();
+      abrirApp();
+    }, 0);
   } else {
     state.user = null; state.profile = null; state.isAdmin = false;
     telaLogin.classList.remove("hidden");
@@ -114,6 +118,7 @@ function abrirApp() {
 
   carregarJogos();
   carregarRanking();
+  carregarEspeciais();
   if (state.isAdmin) carregarJogosParaEncerrar();
   iniciarRealtime();
 }

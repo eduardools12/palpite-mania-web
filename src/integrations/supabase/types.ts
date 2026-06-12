@@ -118,6 +118,36 @@ export type Database = {
         }
         Relationships: []
       }
+      season_predictions: {
+        Row: {
+          artilheiro: string | null
+          campeao: string | null
+          created_at: string
+          selecao_carisma: string | null
+          time_revelacao: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artilheiro?: string | null
+          campeao?: string | null
+          created_at?: string
+          selecao_carisma?: string | null
+          time_revelacao?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artilheiro?: string | null
+          campeao?: string | null
+          created_at?: string
+          selecao_carisma?: string | null
+          time_revelacao?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

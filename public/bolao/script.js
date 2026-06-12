@@ -281,9 +281,16 @@ async function carregarRanking() {
   if (error) { corpo.innerHTML = `<tr><td colspan="3">Erro: ${error.message}</td></tr>`; return; }
   if (!data.length) { corpo.innerHTML = `<tr><td colspan="3">Sem jogadores ainda.</td></tr>`; return; }
 
-  corpo.innerHTML = data.map((r, i) =>
-    `<tr><td>${i + 1}</td><td>${r.display_name}</td><td>${r.points}</td></tr>`
-  ).join("");
+  corpo.innerHTML = "";
+  data.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    [String(i + 1), r.display_name ?? "", String(r.points ?? 0)].forEach(v => {
+      const td = document.createElement("td");
+      td.textContent = v;
+      tr.appendChild(td);
+    });
+    corpo.appendChild(tr);
+  });
 }
 
 

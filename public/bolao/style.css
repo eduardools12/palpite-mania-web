@@ -192,9 +192,62 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .linha-encerrar input[type="text"]   { width: 130px; }
 
 @media (max-width: 640px) {
-  .topo { flex-direction: column; align-items: stretch; }
-  .abas { justify-content: center; }
-  .linha-encerrar { grid-template-columns: 1fr 1fr; }
+  body { font-size: 15px; }
+  .topo {
+    flex-direction: column;
+    align-items: stretch;
+    padding: .8rem 1rem;
+    gap: .6rem;
+  }
+  .topo h1 { font-size: 1.05rem; text-align: center; }
+  .abas {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .3rem;
+  }
+  .aba-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: .45rem .55rem;
+    font-size: .8rem;
+    text-align: center;
+  }
+  .user-box {
+    justify-content: space-between;
+    width: 100%;
+    font-size: .85rem;
+  }
+  #user-nome {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .aba { padding: 1rem .75rem; }
+  .aba h2 { font-size: 1.1rem; }
+  .dica { font-size: .82rem; }
+
+  .grid-jogos { grid-template-columns: 1fr; gap: .8rem; }
+  .card-jogo, .card { padding: .85rem; }
+
+  .form-linha { flex-direction: column; align-items: stretch; }
+  .form-linha input,
+  .form-linha button { width: 100%; min-width: 0; }
+  .form-linha > span { text-align: center; }
+
+  .linha-encerrar {
+    grid-template-columns: 1fr;
+    gap: .4rem;
+  }
+  .linha-encerrar input[type="number"],
+  .linha-encerrar input[type="text"] { width: 100%; }
+
+  .tabela-ranking th,
+  .tabela-ranking td { padding: .55rem .6rem; font-size: .85rem; }
+
+  #form-especiais input { font-size: .95rem; }
 }
 /* Slots de gols (palpite e moderação) */
 .slots-gols { display: grid; gap: 6px; margin: 8px 0; }

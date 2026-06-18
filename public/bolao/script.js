@@ -119,6 +119,7 @@ function abrirApp() {
   carregarJogos();
   carregarRanking();
   carregarEspeciais();
+  carregarEstatisticas();
   if (state.isAdmin) carregarJogosParaEncerrar();
   iniciarRealtime();
 }
@@ -133,6 +134,7 @@ document.querySelectorAll(".aba-btn").forEach(btn => {
     document.querySelectorAll(".aba").forEach(s => s.classList.remove("ativa"));
     btn.classList.add("ativa");
     document.getElementById(btn.dataset.aba).classList.add("ativa");
+    if (btn.dataset.aba === "tab-estatisticas") carregarEstatisticas();
   });
 });
 
@@ -141,12 +143,14 @@ document.querySelectorAll(".aba-btn").forEach(btn => {
    4) JOGOS — carrega jogos abertos e renderiza cards
    ------------------------------------------------------------ */
 async function carregarJogos() {
-  const lista = $("#lista-jogos");
-  lista.innerHTML = "Carregando...";
+  const abertos = $("#lista-jogos-abertos");
+  const encerrados = $("#lista-jogos-encerrados");
+  abertos.innerHTML = "Carregando...";
+  encerrados.innerHTML = "";
 
   const { data: jogos, error } = await sb.from("games")
     .select("*").order("match_at", { ascending: true });
-  if (error) { lista.innerHTML = "Erro: " + error.message; return; }
+  if (error) { abertos.innerHTML = "Erro: " + error.message; return; }
 
   // Palpites do usuário (para pré-preencher)
   const { data: meusPalpites } = await sb.from("predictions")
@@ -154,10 +158,17 @@ async function carregarJogos() {
   const mapPalpites = {};
   (meusPalpites || []).forEach(p => mapPalpites[p.game_id] = p);
 
-  if (!jogos.length) { lista.innerHTML = "<p>Nenhum jogo postado ainda.</p>"; return; }
+  const listaAbertos = jogos.filter(j => !j.closed);
+  const listaEncerrados = jogos.filter(j => j.closed)
+    .sort((a, b) => new Date(b.match_at) - new Date(a.match_at));
 
-  lista.innerHTML = "";
-  jogos.forEach(j => lista.appendChild(renderCardJogo(j, mapPalpites[j.id])));
+  abertos.innerHTML = "";
+  if (!listaAbertos.length) abertos.innerHTML = "<p>Nenhum jogo aberto no momento.</p>";
+  else listaAbertos.forEach(j => abertos.appendChild(renderCardJogo(j, mapPalpites[j.id])));
+
+  encerrados.innerHTML = "";
+  if (!listaEncerrados.length) encerrados.innerHTML = "<p>Nenhum jogo encerrado ainda.</p>";
+  else listaEncerrados.forEach(j => encerrados.appendChild(renderCardJogo(j, mapPalpites[j.id])));
 }
 
 function renderCardJogo(j, palpite) {

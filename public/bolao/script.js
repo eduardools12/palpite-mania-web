@@ -1,26 +1,8 @@
-/* ===========================================================
-   BOLÃO - Lógica (JavaScript)
-   ===========================================================
-   Este arquivo contém TODO o COMPORTAMENTO do site.
-   Está organizado em blocos comentados:
-
-     1) CONFIGURAÇÃO    -> conecta ao backend (Lovable Cloud)
-     2) AUTENTICAÇÃO    -> cadastro, login, logout, sessão
-     3) NAVEGAÇÃO       -> trocar entre abas
-     4) JOGOS           -> carregar e exibir os jogos abertos
-     5) PALPITES        -> enviar/atualizar palpite do jogador
-     6) RANKING         -> ler a view de ranking e renderizar
-     7) MODERAÇÃO       -> criar jogo e lançar placar final
-     8) REALTIME        -> reatualiza tudo quando algo muda no
-                           banco (qualquer jogador, qualquer hora)
-   =========================================================== */
-
-
 /* ------------------------------------------------------------
    1) CONFIGURAÇÃO — cliente do banco
    ------------------------------------------------------------ */
-const SUPABASE_URL  = "https://xoxpgvgpvqdhoztkxlyj.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhveHBndmdwdnFkaG96dGt4bHlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODI1NTgsImV4cCI6MjA5Njc1ODU1OH0.WG4wuoyax_ZDdTouAbvwLs6-IRtZjDBrwG7hnis-nc8";
+const SUPABASE_URL  = "https://rarmvpbvcptrhlhvlaye.supabase.co";
+const SUPABASE_ANON = "sb_publishable_eanYKgVZFnH80oHxjcUmtA_ZMvO6IGn";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // Estado global simples

@@ -51,6 +51,7 @@
       <nav class="abas">
         <button class="aba-btn ativa" data-aba="tab-jogos">Jogos &amp; Palpites</button>
         <button class="aba-btn"        data-aba="tab-ranking">Ranking</button>
+        <button class="aba-btn"        data-aba="tab-estatisticas">Estatísticas</button>
         <button class="aba-btn"        data-aba="tab-especiais">Especiais</button>
         <button class="aba-btn hidden" data-aba="tab-moderacao" id="btn-aba-mod">Moderação</button>
       </nav>
@@ -62,13 +63,17 @@
 
     <!-- ABA 1: JOGOS -->
     <section id="tab-jogos" class="aba ativa">
-      <h2>Jogos abertos para palpite</h2>
       <p class="dica">
         Placar exato = <b>3 pts</b> • vencedor = <b>1 pt</b> •
         cada jogador certo = <b>+1 pt</b> • cada minuto certo = <b>+2 pts</b>
         <br/><small>Palpites travam <b>1 minuto antes</b> do início do jogo.</small>
       </p>
-      <div id="lista-jogos" class="grid-jogos"></div>
+
+      <h2>Jogos abertos para palpite</h2>
+      <div id="lista-jogos-abertos" class="grid-jogos"></div>
+
+      <h2 style="margin-top:1.5rem">Jogos encerrados</h2>
+      <div id="lista-jogos-encerrados" class="grid-jogos"></div>
     </section>
 
     <!-- ABA 2: RANKING -->
@@ -78,6 +83,13 @@
         <thead><tr><th>#</th><th>Jogador</th><th title="Placar exato: 3 pontos quando o palpite acerta o placar final exato (gols do time da casa e do visitante).">P</th><th title="Vencedor: 1 ponto quando o palpite acerta quem venceu ou o empate, sem acertar o placar exato.">V</th><th title="Artilheiros: 1 ponto para cada gol real em que o palpite acertou o jogador que marcou. Se um jogador marcou mais de um gol e foi indicado uma vez, cada gol conta.">A</th><th title="Minutos: 2 pontos para cada gol real em que o palpite acertou o minuto exato. O minuto precisa coincidir com um gol real do jogo.">M</th><th>Pontos</th></tr></thead>
         <tbody id="corpo-ranking"></tbody>
       </table>
+    </section>
+
+    <!-- ABA: ESTATÍSTICAS -->
+    <section id="tab-estatisticas" class="aba">
+      <h2>Estatísticas dos jogadores</h2>
+      <p class="dica">Resumo de cada participante calculado a partir dos jogos já encerrados.</p>
+      <div id="lista-estatisticas" class="grid-jogos"></div>
     </section>
 
     <!-- ABA ESPECIAIS: palpites de temporada -->

@@ -1,6 +1,4 @@
-/* ------------------------------------------------------------
-   1) CONFIGURAÇÃO — cliente do banco
-   ------------------------------------------------------------ */
+//1) CONFIGURAÇÃO — cliente do banco
 const SUPABASE_URL  = "https://rarmvpbvcptrhlhvlaye.supabase.co";
 const SUPABASE_ANON = "sb_publishable_eanYKgVZFnH80oHxjcUmtA_ZMvO6IGn";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -13,9 +11,7 @@ const state = {
 };
 
 
-/* ------------------------------------------------------------
-   2) AUTENTICAÇÃO — cadastro, login, logout
-   ------------------------------------------------------------ */
+//2) AUTENTICAÇÃO — cadastro, login, logout
 const $ = (sel) => document.querySelector(sel);
 const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -107,9 +103,7 @@ function abrirApp() {
 }
 
 
-/* ------------------------------------------------------------
-   3) NAVEGAÇÃO ENTRE ABAS
-   ------------------------------------------------------------ */
+//3) NAVEGAÇÃO ENTRE ABAS
 document.querySelectorAll(".aba-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".aba-btn").forEach(b => b.classList.remove("ativa"));
@@ -121,9 +115,8 @@ document.querySelectorAll(".aba-btn").forEach(btn => {
 });
 
 
-/* ------------------------------------------------------------
-   4) JOGOS — carrega jogos abertos e renderiza cards
-   ------------------------------------------------------------ */
+//4) JOGOS — carrega jogos abertos e renderiza cards
+
 async function carregarJogos() {
   const abertos = $("#lista-jogos-abertos");
   const encerrados = $("#lista-jogos-encerrados");
@@ -242,9 +235,7 @@ function renderCardJogo(j, palpite) {
 }
 
 
-/* ------------------------------------------------------------
-   5) PALPITES — upsert (cria ou atualiza) na tabela predictions
-   ------------------------------------------------------------ */
+//5) PALPITES — upsert (cria ou atualiza) na tabela predictions
 async function enviarPalpite(gameId, slotsEl) {
   const gh = parseInt($("#gh-" + gameId).value, 10);
   const ga = parseInt($("#ga-" + gameId).value, 10);
@@ -272,9 +263,7 @@ async function enviarPalpite(gameId, slotsEl) {
 }
 
 
-/* ------------------------------------------------------------
-   6) RANKING — lê a view "rankings" (calculada no banco)
-   ------------------------------------------------------------ */
+//6) RANKING — lê a view "rankings" (calculada no banco)
 async function carregarRanking() {
   const corpo = $("#corpo-ranking");
   const { data, error } = await sb.from("rankings")
@@ -314,13 +303,9 @@ async function carregarRanking() {
 }
 
 
-/* ------------------------------------------------------------
-   7) MODERAÇÃO — só admin
-   ------------------------------------------------------------ */
+//7) MODERAÇÃO — só admin
 
-/* ------------------------------------------------------------
-   ESPECIAIS — palpites de temporada
-   ------------------------------------------------------------ */
+//ESPECIAIS — palpites de temporada
 async function carregarEspeciais() {
   const { data } = await sb.from("season_predictions")
     .select("*").eq("user_id", state.user.id).maybeSingle();
@@ -436,9 +421,8 @@ async function encerrarJogo(gameId, slotsEl) {
 }
 
 
-/* ------------------------------------------------------------
+//
    8) REALTIME — escuta mudanças no banco e reatualiza a tela
-   ------------------------------------------------------------ */
 let canal = null;
 function iniciarRealtime() {
   if (canal) return;
@@ -454,10 +438,8 @@ function iniciarRealtime() {
     .subscribe();
 }
 
-/* ------------------------------------------------------------
-   9) ESTATÍSTICAS — calcula resumo por jogador a partir dos
+//9) ESTATÍSTICAS — calcula resumo por jogador a partir dos
       jogos encerrados e das predictions (todos podem ver).
-   ------------------------------------------------------------ */
 function calcPontosPorPredicao(g, p) {
   let pts = 0, pCnt = 0, vCnt = 0, aCnt = 0, mCnt = 0;
   if (p.guess_home === g.score_home && p.guess_away === g.score_away) {

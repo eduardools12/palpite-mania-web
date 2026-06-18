@@ -292,7 +292,7 @@ async function carregarRanking() {
   corpo.innerHTML = "";
   data.forEach((r, i) => {
     const tr = document.createElement("tr");
-    [
+    const cels = [
       String(i + 1),
       r.display_name ?? "",
       String(r.p_count ?? 0),
@@ -300,9 +300,20 @@ async function carregarRanking() {
       String(r.a_count ?? 0),
       String(r.m_count ?? 0),
       String(r.points ?? 0),
-    ].forEach(v => {
+    ];
+    const titles = [
+      "",
+      "",
+      "Placar exato: 3 pontos quando o palpite acerta o placar final exato (gols do time da casa e do visitante).",
+      "Vencedor: 1 ponto quando o palpite acerta quem venceu ou o empate, sem acertar o placar exato.",
+      "Artilheiros: 1 ponto para cada gol real em que o palpite acertou o jogador que marcou. Se um jogador marcou mais de um gol e foi indicado uma vez, cada gol conta.",
+      "Minutos: 2 pontos para cada gol real em que o palpite acertou o minuto exato. O minuto precisa coincidir com um gol real do jogo.",
+      "Total de pontos = (P × 3) + (V × 1) + (A × 1) + (M × 2).",
+    ];
+    cels.forEach((v, idx) => {
       const td = document.createElement("td");
       td.textContent = v;
+      if (titles[idx]) td.title = titles[idx];
       tr.appendChild(td);
     });
     corpo.appendChild(tr);

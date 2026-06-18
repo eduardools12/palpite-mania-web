@@ -119,6 +119,7 @@ function abrirApp() {
   carregarJogos();
   carregarRanking();
   carregarEspeciais();
+  carregarEstatisticas();
   if (state.isAdmin) carregarJogosParaEncerrar();
   iniciarRealtime();
 }
@@ -133,6 +134,7 @@ document.querySelectorAll(".aba-btn").forEach(btn => {
     document.querySelectorAll(".aba").forEach(s => s.classList.remove("ativa"));
     btn.classList.add("ativa");
     document.getElementById(btn.dataset.aba).classList.add("ativa");
+    if (btn.dataset.aba === "tab-estatisticas") carregarEstatisticas();
   });
 });
 
@@ -141,12 +143,14 @@ document.querySelectorAll(".aba-btn").forEach(btn => {
    4) JOGOS — carrega jogos abertos e renderiza cards
    ------------------------------------------------------------ */
 async function carregarJogos() {
-  const lista = $("#lista-jogos");
-  lista.innerHTML = "Carregando...";
+  const abertos = $("#lista-jogos-abertos");
+  const encerrados = $("#lista-jogos-encerrados");
+  abertos.innerHTML = "Carregando...";
+  encerrados.innerHTML = "";
 
   const { data: jogos, error } = await sb.from("games")
     .select("*").order("match_at", { ascending: true });
-  if (error) { lista.innerHTML = "Erro: " + error.message; return; }
+  if (error) { abertos.innerHTML = "Erro: " + error.message; return; }
 
   // Palpites do usuário (para pré-preencher)
   const { data: meusPalpites } = await sb.from("predictions")
@@ -154,10 +158,17 @@ async function carregarJogos() {
   const mapPalpites = {};
   (meusPalpites || []).forEach(p => mapPalpites[p.game_id] = p);
 
-  if (!jogos.length) { lista.innerHTML = "<p>Nenhum jogo postado ainda.</p>"; return; }
+  const listaAbertos = jogos.filter(j => !j.closed);
+  const listaEncerrados = jogos.filter(j => j.closed)
+    .sort((a, b) => new Date(b.match_at) - new Date(a.match_at));
 
-  lista.innerHTML = "";
-  jogos.forEach(j => lista.appendChild(renderCardJogo(j, mapPalpites[j.id])));
+  abertos.innerHTML = "";
+  if (!listaAbertos.length) abertos.innerHTML = "<p>Nenhum jogo aberto no momento.</p>";
+  else listaAbertos.forEach(j => abertos.appendChild(renderCardJogo(j, mapPalpites[j.id])));
+
+  encerrados.innerHTML = "";
+  if (!listaEncerrados.length) encerrados.innerHTML = "<p>Nenhum jogo encerrado ainda.</p>";
+  else listaEncerrados.forEach(j => encerrados.appendChild(renderCardJogo(j, mapPalpites[j.id])));
 }
 
 function renderCardJogo(j, palpite) {
@@ -459,4 +470,130 @@ function iniciarRealtime() {
       if (state.isAdmin) carregarJogosParaEncerrar();
     })
     .subscribe();
+}
+
+/* ------------------------------------------------------------
+   9) ESTATÍSTICAS — calcula resumo por jogador a partir dos
+      jogos encerrados e das predictions (todos podem ver).
+   ------------------------------------------------------------ */
+function calcPontosPorPredicao(g, p) {
+  let pts = 0, pCnt = 0, vCnt = 0, aCnt = 0, mCnt = 0;
+  if (p.guess_home === g.score_home && p.guess_away === g.score_away) {
+    pts += 3; pCnt = 1;
+  } else {
+    const realW = Math.sign(g.score_home - g.score_away);
+    const palpW = Math.sign(p.guess_home - p.guess_away);
+    if (realW === palpW) { pts += 1; vCnt = 1; }
+  }
+  const realScorers = (g.scorers || []).map(s => (s || "").trim().toLowerCase());
+  const realMinutes = (g.minutes || []);
+  const guessScorers = (p.guess_scorers || []).map(s => (s || "").trim().toLowerCase());
+  const guessMinutes = (p.guess_minutes || []);
+  const usadosA = new Array(realScorers.length).fill(false);
+  guessScorers.forEach(gs => {
+    if (!gs) return;
+    const idx = realScorers.findIndex((rs, i) => !usadosA[i] && rs && rs === gs);
+    if (idx >= 0) { usadosA[idx] = true; aCnt += 1; pts += 1; }
+  });
+  const usadosM = new Array(realMinutes.length).fill(false);
+  guessMinutes.forEach(gm => {
+    if (gm === null || gm === undefined || gm === "") return;
+    const gmN = parseInt(gm, 10);
+    const idx = realMinutes.findIndex((rm, i) => !usadosM[i] && rm !== null && rm !== undefined && parseInt(rm, 10) === gmN);
+    if (idx >= 0) { usadosM[idx] = true; mCnt += 1; pts += 2; }
+  });
+  return { pts, pCnt, vCnt, aCnt, mCnt };
+}
+
+async function carregarEstatisticas() {
+  const div = $("#lista-estatisticas");
+  if (!div) return;
+  div.innerHTML = "Carregando...";
+
+  const [{ data: profiles }, { data: games }, { data: preds }] = await Promise.all([
+    sb.from("profiles").select("id, display_name"),
+    sb.from("games").select("*").eq("closed", true),
+    sb.from("predictions").select("*"),
+  ]);
+
+  const gameById = {};
+  (games || []).forEach(g => gameById[g.id] = g);
+
+  // Ordena jogos encerrados por data, para calcular sequências
+  const closedOrdered = (games || []).slice().sort((a, b) => new Date(a.match_at) - new Date(b.match_at));
+
+  // Agrupa predictions por usuário
+  const predsByUser = {};
+  (preds || []).forEach(p => {
+    (predsByUser[p.user_id] = predsByUser[p.user_id] || []).push(p);
+  });
+
+  // Calcula stats por usuário
+  const stats = (profiles || []).map(prof => {
+    const meus = predsByUser[prof.id] || [];
+    const totalPalpites = meus.length;
+    let totalClosed = 0, acertos = 0;
+    let totP = 0, totV = 0, totA = 0, totM = 0, totalPts = 0;
+
+    const predByGame = {};
+    meus.forEach(p => predByGame[p.game_id] = p);
+
+    // sequência (somente jogos encerrados em ordem cronológica em que o jogador palpitou)
+    let melhorSeq = 0, seqAtual = 0;
+    closedOrdered.forEach(g => {
+      const p = predByGame[g.id];
+      if (!p) return;
+      totalClosed += 1;
+      const r = calcPontosPorPredicao(g, p);
+      totP += r.pCnt; totV += r.vCnt; totA += r.aCnt; totM += r.mCnt;
+      totalPts += r.pts;
+      if (r.pts > 0) { acertos += 1; seqAtual += 1; if (seqAtual > melhorSeq) melhorSeq = seqAtual; }
+      else { seqAtual = 0; }
+    });
+
+    const pctAcerto = totalClosed ? (acertos / totalClosed) * 100 : 0;
+
+    // Especialidade: categoria com mais pontos
+    const cats = [
+      { nome: "placar exato", pts: totP * 3 },
+      { nome: "vencedor",     pts: totV * 1 },
+      { nome: "artilheiros",  pts: totA * 1 },
+      { nome: "minutos",      pts: totM * 2 },
+    ];
+    cats.sort((a, b) => b.pts - a.pts);
+    const especialidade = cats[0].pts > 0 ? cats[0].nome : "—";
+
+    return {
+      id: prof.id,
+      nome: prof.display_name || "(sem nome)",
+      totalPalpites, pctAcerto, melhorSeq, especialidade, totalPts,
+    };
+  });
+
+  // Top X% baseado em pontos (1 = melhor)
+  const ordenadosPts = stats.slice().sort((a, b) => b.totalPts - a.totalPts);
+  const totalJog = ordenadosPts.length || 1;
+  const posicao = {};
+  ordenadosPts.forEach((s, i) => posicao[s.id] = i + 1);
+
+  // Exibe ordenado por pontos desc, mas escondendo quem nunca palpitou
+  const visiveis = ordenadosPts.filter(s => s.totalPalpites > 0);
+  if (!visiveis.length) { div.innerHTML = "<p>Ainda não há palpites para gerar estatísticas.</p>"; return; }
+
+  div.innerHTML = "";
+  visiveis.forEach(s => {
+    const pos = posicao[s.id];
+    const topPct = Math.max(1, Math.round((pos / totalJog) * 100));
+    const card = document.createElement("div");
+    card.className = "card-jogo";
+    card.innerHTML = `
+      <h3>${escapeHtml(s.nome)}</h3>
+      <div class="stat-line">📊 <b>${s.totalPalpites}</b> palpites realizados</div>
+      <div class="stat-line">🎯 <b>${s.pctAcerto.toFixed(1).replace(".", ",")}%</b> de acerto</div>
+      <div class="stat-line">🔥 Melhor sequência: <b>${s.melhorSeq}</b></div>
+      <div class="stat-line">⚽ Especialidade: <b>${escapeHtml(s.especialidade)}</b></div>
+      <div class="stat-line">🏆 Top <b>${topPct}%</b> da comunidade</div>
+    `;
+    div.appendChild(card);
+  });
 }

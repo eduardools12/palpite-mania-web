@@ -161,6 +161,17 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .tabela-ranking tr:last-child td { border-bottom: none; }
 .tabela-ranking td:last-child { font-weight: bold; color: #fbbf24; }
 
+/* ---------- ESTATÍSTICAS ---------- */
+.stat-line {
+  background: #0f172a;
+  padding: .45rem .65rem;
+  border-radius: 6px;
+  margin-top: .4rem;
+  font-size: .9rem;
+  color: #cbd5e1;
+}
+.stat-line b { color: #fbbf24; }
+
 /* ---------- MODERAÇÃO ---------- */
 .form-linha { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
 .form-linha input {

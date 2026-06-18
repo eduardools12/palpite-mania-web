@@ -170,9 +170,13 @@ export type Database = {
     Views: {
       rankings: {
         Row: {
+          a_count: number | null
           display_name: string | null
+          m_count: number | null
+          p_count: number | null
           points: number | null
           user_id: string | null
+          v_count: number | null
         }
         Relationships: []
       }

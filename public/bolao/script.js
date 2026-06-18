@@ -286,13 +286,21 @@ async function carregarRanking() {
   const corpo = $("#corpo-ranking");
   const { data, error } = await sb.from("rankings")
     .select("*").order("points", { ascending: false });
-  if (error) { corpo.innerHTML = `<tr><td colspan="3">Erro: ${error.message}</td></tr>`; return; }
-  if (!data.length) { corpo.innerHTML = `<tr><td colspan="3">Sem jogadores ainda.</td></tr>`; return; }
+  if (error) { corpo.innerHTML = `<tr><td colspan="7">Erro: ${error.message}</td></tr>`; return; }
+  if (!data.length) { corpo.innerHTML = `<tr><td colspan="7">Sem jogadores ainda.</td></tr>`; return; }
 
   corpo.innerHTML = "";
   data.forEach((r, i) => {
     const tr = document.createElement("tr");
-    [String(i + 1), r.display_name ?? "", String(r.points ?? 0)].forEach(v => {
+    [
+      String(i + 1),
+      r.display_name ?? "",
+      String(r.p_count ?? 0),
+      String(r.v_count ?? 0),
+      String(r.a_count ?? 0),
+      String(r.m_count ?? 0),
+      String(r.points ?? 0),
+    ].forEach(v => {
       const td = document.createElement("td");
       td.textContent = v;
       tr.appendChild(td);

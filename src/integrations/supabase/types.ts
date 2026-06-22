@@ -16,43 +16,124 @@ export type Database = {
     Tables: {
       games: {
         Row: {
+          api_fixture_id: number | null
+          api_league_id: number | null
+          api_season: number | null
+          away_team_api_id: number | null
           closed: boolean
           created_at: string
+          home_team_api_id: number | null
           id: string
+          last_sync: string | null
           match_at: string
           minutes: number[]
+          round: string | null
           score_away: number | null
           score_home: number | null
           scorer: string | null
+          scorer_player_ids: number[]
+          scorer_team_ids: number[]
           scorers: string[]
+          stage: string | null
+          status: string | null
           team_away: string
           team_home: string
         }
         Insert: {
+          api_fixture_id?: number | null
+          api_league_id?: number | null
+          api_season?: number | null
+          away_team_api_id?: number | null
           closed?: boolean
           created_at?: string
+          home_team_api_id?: number | null
           id?: string
+          last_sync?: string | null
           match_at: string
           minutes?: number[]
+          round?: string | null
           score_away?: number | null
           score_home?: number | null
           scorer?: string | null
+          scorer_player_ids?: number[]
+          scorer_team_ids?: number[]
           scorers?: string[]
+          stage?: string | null
+          status?: string | null
           team_away: string
           team_home: string
         }
         Update: {
+          api_fixture_id?: number | null
+          api_league_id?: number | null
+          api_season?: number | null
+          away_team_api_id?: number | null
           closed?: boolean
           created_at?: string
+          home_team_api_id?: number | null
           id?: string
+          last_sync?: string | null
           match_at?: string
           minutes?: number[]
+          round?: string | null
           score_away?: number | null
           score_home?: number | null
           scorer?: string | null
+          scorer_player_ids?: number[]
+          scorer_team_ids?: number[]
           scorers?: string[]
+          stage?: string | null
+          status?: string | null
           team_away?: string
           team_home?: string
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          age: number | null
+          api_player_id: number
+          created_at: string
+          height: string | null
+          id: string
+          name: string
+          nationality: string | null
+          photo: string | null
+          position: string | null
+          team_id: number | null
+          team_name: string | null
+          updated_at: string
+          weight: string | null
+        }
+        Insert: {
+          age?: number | null
+          api_player_id: number
+          created_at?: string
+          height?: string | null
+          id?: string
+          name: string
+          nationality?: string | null
+          photo?: string | null
+          position?: string | null
+          team_id?: number | null
+          team_name?: string | null
+          updated_at?: string
+          weight?: string | null
+        }
+        Update: {
+          age?: number | null
+          api_player_id?: number
+          created_at?: string
+          height?: string | null
+          id?: string
+          name?: string
+          nationality?: string | null
+          photo?: string | null
+          position?: string | null
+          team_id?: number | null
+          team_name?: string | null
+          updated_at?: string
+          weight?: string | null
         }
         Relationships: []
       }
@@ -64,6 +145,7 @@ export type Database = {
           guess_home: number
           guess_minutes: number[]
           guess_scorer: string | null
+          guess_scorer_player_ids: number[]
           guess_scorers: string[]
           id: string
           user_id: string
@@ -75,6 +157,7 @@ export type Database = {
           guess_home: number
           guess_minutes?: number[]
           guess_scorer?: string | null
+          guess_scorer_player_ids?: number[]
           guess_scorers?: string[]
           id?: string
           user_id: string
@@ -86,6 +169,7 @@ export type Database = {
           guess_home?: number
           guess_minutes?: number[]
           guess_scorer?: string | null
+          guess_scorer_player_ids?: number[]
           guess_scorers?: string[]
           id?: string
           user_id?: string
@@ -182,6 +266,19 @@ export type Database = {
       }
     }
     Functions: {
+      count_minute_matches: {
+        Args: { guess_minutes: number[]; real_minutes: number[] }
+        Returns: number
+      }
+      count_scorer_matches: {
+        Args: {
+          guess_player_ids: number[]
+          guess_scorers: string[]
+          real_player_ids: number[]
+          real_scorers: string[]
+        }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

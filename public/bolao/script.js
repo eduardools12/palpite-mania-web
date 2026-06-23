@@ -1,6 +1,6 @@
 //1) CONFIGURAÇÃO — cliente do banco
-const SUPABASE_URL  = "https://xoxpgvgpvqdhoztkxlyj.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhveHBndmdwdnFkaG96dGt4bHlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODI1NTgsImV4cCI6MjA5Njc1ODU1OH0.WG4wuoyax_ZDdTouAbvwLs6-IRtZjDBrwG7hnis-nc8";
+const SUPABASE_URL  = "https://rarmvpbvcptrhlhvlaye.supabase.co";
+const SUPABASE_ANON = "sb_publishable_eanYKgVZFnH80oHxjcUmtA_ZMvO6IGn";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // Estado global simples
@@ -561,47 +561,3 @@ async function carregarEstatisticas() {
     div.appendChild(card);
   });
 }
-
-
-// ===== API Football (admin) =====
-const apiLog = document.getElementById("api-log");
-function logApi(msg, obj) {
-  const ts = new Date().toLocaleTimeString();
-  const line = `[${ts}] ${msg}` + (obj !== undefined ? "\n" + JSON.stringify(obj, null, 2) : "");
-  apiLog.textContent = line + "\n\n" + apiLog.textContent;
-}
-
-document.getElementById("btn-api-status")?.addEventListener("click", async () => {
-  logApi("Testando conexão com API-Football...");
-  const { data, error } = await sb.functions.invoke("apifootball-status");
-  if (error) return logApi("Erro:", error);
-  logApi("Resposta:", data);
-});
-
-document.getElementById("btn-api-import")?.addEventListener("click", async () => {
-  if (!confirm("Importar/atualizar jogos da Copa do Mundo 2026? Não sobrescreve placares já lançados.")) return;
-  logApi("Importando fixtures...");
-  const { data, error } = await sb.functions.invoke("apifootball-import-fixtures");
-  if (error) return logApi("Erro:", error);
-  logApi("Resultado:", data);
-});
-
-document.getElementById("btn-api-sync-all")?.addEventListener("click", async () => {
-  logApi("Buscando jogos com api_fixture_id...");
-  const { data: games, error } = await sb
-    .from("games")
-    .select("id, team_home, team_away, api_fixture_id")
-    .not("api_fixture_id", "is", null);
-  if (error) return logApi("Erro:", error);
-  if (!games?.length) return logApi("Nenhum jogo com api_fixture_id. Importe primeiro.");
-  logApi(`Sincronizando ${games.length} jogos (um por um)...`);
-  let ok = 0, fail = 0;
-  for (const g of games) {
-    const { data: res, error: e2 } = await sb.functions.invoke("apifootball-sync-fixture", {
-      body: { game_id: g.id, close_if_finished: true },
-    });
-    if (e2 || !res?.ok) { fail++; logApi(`✗ ${g.team_home} x ${g.team_away}`, e2 || res); }
-    else { ok++; logApi(`✓ ${g.team_home} x ${g.team_away}`, { score: res.score, goals: res.goals, closed: res.closed }); }
-  }
-  logApi(`Concluído. ok=${ok} fail=${fail}`);
-});

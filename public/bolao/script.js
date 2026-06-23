@@ -1,6 +1,6 @@
 //1) CONFIGURAÇÃO — cliente do banco
-const SUPABASE_URL  = "https://rarmvpbvcptrhlhvlaye.supabase.co";
-const SUPABASE_ANON = "sb_publishable_eanYKgVZFnH80oHxjcUmtA_ZMvO6IGn";
+const SUPABASE_URL  = "https://xoxpgvgpvqdhoztkxlyj.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhveHBndmdwdnFkaG96dGt4bHlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODI1NTgsImV4cCI6MjA5Njc1ODU1OH0.WG4wuoyax_ZDdTouAbvwLs6-IRtZjDBrwG7hnis-nc8";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // Estado global simples

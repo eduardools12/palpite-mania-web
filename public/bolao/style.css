@@ -279,3 +279,16 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .linha-encerrar-topo { grid-template-columns: 1fr 1fr; }
   .linha-gol { grid-template-columns: 50px 1fr 70px; }
 }
+
+.api-log {
+  margin-top: 10px;
+  background: #0b1220;
+  color: #d1e7ff;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

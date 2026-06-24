@@ -421,8 +421,7 @@ async function encerrarJogo(gameId, slotsEl) {
 }
 
 
-//
-   8) REALTIME — escuta mudanças no banco e reatualiza a tela
+// 8) REALTIME — escuta mudanças no banco e reatualiza a tela
 let canal = null;
 function iniciarRealtime() {
   if (canal) return;

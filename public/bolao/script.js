@@ -421,8 +421,7 @@ async function encerrarJogo(gameId, slotsEl) {
 }
 
 
-//
-   8) REALTIME — escuta mudanças no banco e reatualiza a tela
+// 8) REALTIME — escuta mudanças no banco e reatualiza a tela
 let canal = null;
 function iniciarRealtime() {
   if (canal) return;
@@ -438,8 +437,8 @@ function iniciarRealtime() {
     .subscribe();
 }
 
-//9) ESTATÍSTICAS — calcula resumo por jogador a partir dos
-      jogos encerrados e das predictions (todos podem ver).
+// 9) ESTATÍSTICAS — calcula resumo por jogador a partir dos
+// jogos encerrados e das predictions (todos podem ver).
 function calcPontosPorPredicao(g, p) {
   let pts = 0, pCnt = 0, vCnt = 0, aCnt = 0, mCnt = 0;
   if (p.guess_home === g.score_home && p.guess_away === g.score_away) {
